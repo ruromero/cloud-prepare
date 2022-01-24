@@ -126,6 +126,18 @@ func (ac *awsCloud) validatePreparePrerequisites(vpcID string) error {
 	return ac.validateCreateSecGroupRule(vpcID)
 }
 
+// CreateVpcPeering Creates a VPC Peering to the target cloud. Only the same
+// Cloud Provider is supported
+func (ac *awsCloud) CreateVpcPeering(target api.Cloud, reporter api.Reporter) error {
+	targetCloud, ok := target.(*awsCloud)
+	if !ok {
+		err := errors.Errorf("only AWS clients are supported")
+		reporter.Failed(err)
+		return err
+	}
+	return ac.createAWSPeering(targetCloud, reporter)
+}
+
 func (ac *awsCloud) CleanupAfterSubmariner(reporter api.Reporter) error {
 	reporter.Started(messageRetrieveVPCID)
 
