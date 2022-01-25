@@ -13,6 +13,7 @@ require (
 	github.com/onsi/gomega v1.18.0
 	github.com/pkg/errors v0.9.1
 	github.com/submariner-io/admiral v0.12.0-m3
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	google.golang.org/api v0.65.0
 	k8s.io/api v0.19.16
 	k8s.io/apimachinery v0.19.16

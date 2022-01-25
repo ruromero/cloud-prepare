@@ -150,7 +150,7 @@ func (ac *awsCloud) validatePeeringPrerequisites(target *awsCloud, reporter api.
 		return errors.Wrapf(err, "unable to validate vpc peering prerequisites for target")
 	}
 
-	overlap, err := checkVpcOverlap(srcVpc, targetVpc)
+	overlap, err := CheckVpcOverlap(srcVpc, targetVpc)
 	if err != nil {
 		reporter.Failed(err)
 		return err
@@ -164,8 +164,8 @@ func (ac *awsCloud) validatePeeringPrerequisites(target *awsCloud, reporter api.
 	return nil
 }
 
-// checkVpcOverlap checks CIDR Blocks of networks A and B overlaps
-func checkVpcOverlap(a *types.Vpc, b *types.Vpc) (bool, error) {
+// CheckVpcOverlap checks CIDR Blocks of networks A and B overlaps
+func CheckVpcOverlap(a *types.Vpc, b *types.Vpc) (bool, error) {
 	_, netA, err := net.ParseCIDR(*a.CidrBlock)
 	if err != nil {
 		return false, err
