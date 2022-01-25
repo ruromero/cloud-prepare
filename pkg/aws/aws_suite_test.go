@@ -15,7 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package aws_test
+package aws
 
 import (
 	"testing"
@@ -29,12 +29,9 @@ import (
 const (
 	infraID      = "test-infraID"
 	region       = "test-region"
-	projectID    = "test-projectID"
-	instanceType = "test-instance-type"
-	zone1        = "test-zone1"
-	zone2        = "test-zone2"
-	instance1    = infraID + "instance1"
-	instance2    = infraID + "instance2"
+
+	targetInfraID = "other-infraID"
+	targetRegion  = "other-region"
 )
 
 func TestAWS(t *testing.T) {

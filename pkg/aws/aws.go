@@ -129,18 +129,13 @@ func (ac *awsCloud) validatePreparePrerequisites(vpcID string) error {
 // CreateVpcPeering Creates a VPC Peering to the target cloud. Only the same
 // Cloud Provider is supported
 func (ac *awsCloud) CreateVpcPeering(target api.Cloud, reporter api.Reporter) error {
-	switch target.(type) {
-	case *awsCloud:
-		targetCloud, ok := target.(*awsCloud)
-		if !ok {
-			err := errors.Errorf("unable to cast target Cloud to awsCloud")
-			reporter.Failed(err)
-			return err
-		}
-		return ac.createAWSPeering(targetCloud, reporter)
-	default:
-		return errors.Errorf("only AWS clients are supported")
+	targetCloud, ok := target.(*awsCloud)
+	if !ok {
+		err := errors.Errorf("only AWS clients are supported")
+		reporter.Failed(err)
+		return err
 	}
+	return ac.createAWSPeering(targetCloud, reporter)
 }
 
 func (ac *awsCloud) CleanupAfterSubmariner(reporter api.Reporter) error {
