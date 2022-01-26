@@ -19,6 +19,7 @@ package aws
 
 import (
 	"context"
+
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/golang/mock/gomock"
@@ -47,11 +48,11 @@ func testCreateVpcPeering() {
 			It("receives an overlapping CidrBlock for source and target", func() {
 				cloudA.awsClient.EXPECT().
 					DescribeVpcs(context.TODO(), gomock.Any()).
-					Return(getVpcOutputFor("vpc-a","10.0.0.0/12"))
+					Return(getVpcOutputFor("vpc-a", "10.0.0.0/12"))
 
 				cloudB.awsClient.EXPECT().
 					DescribeVpcs(context.TODO(), gomock.Any()).
-					Return(getVpcOutputFor("vpc-b","10.1.0.0/12"))
+					Return(getVpcOutputFor("vpc-b", "10.1.0.0/12"))
 				err := cloudA.cloud.CreateVpcPeering(cloudB.cloud, api.NewLoggingReporter())
 				Expect(err).To(HaveOccurred())
 				Expect(err).Should(
@@ -100,11 +101,23 @@ func (f *fooCloud) CleanupAfterSubmariner(reporter api.Reporter) error {
 	panic("not implemented")
 }
 
+func getRouteTableFor(vpcID string) (*ec2.DescribeRouteTablesOutput, error) {
+	rtID := vpcID + "-rt"
+	return &ec2.DescribeRouteTablesOutput{
+		RouteTables: []types.RouteTable{
+			{
+				VpcId:        &vpcID,
+				RouteTableId: &rtID,
+			},
+		},
+	}, nil
+}
+
 func getVpcOutputFor(id, cidrBlock string) (*ec2.DescribeVpcsOutput, error) {
 	return &ec2.DescribeVpcsOutput{
 		Vpcs: []types.Vpc{
 			{
-				VpcId: &id,
+				VpcId:     &id,
 				CidrBlock: &cidrBlock,
 			},
 		},
@@ -132,11 +145,11 @@ func newCloudTestDriver(infraID, region string) *cloudTestDriver {
 func ensurePrerequisitesAreMet(cloudA, cloudB *cloudTestDriver) {
 	cloudA.awsClient.EXPECT().
 		DescribeVpcs(context.TODO(), gomock.Any()).
-		Return(getVpcOutputFor("vpc-a","10.0.0.0/16")).
+		Return(getVpcOutputFor("vpc-a", "10.0.0.0/16")).
 		Times(1)
 
 	cloudB.awsClient.EXPECT().
 		DescribeVpcs(context.TODO(), gomock.Any()).
-		Return(getVpcOutputFor("vpc-b","10.1.0.0/16")).
+		Return(getVpcOutputFor("vpc-b", "10.1.0.0/16")).
 		Times(1)
 }

@@ -2,8 +2,10 @@ package aws
 
 import (
 	"context"
+
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/smithy-go"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,10 +15,63 @@ import (
 var _ = Describe("AWS Peering", func() {
 	Context("Test Validate Peering Prerequisites", testValidatePeeringPrerequisites)
 	Context("Test Check VPC Overlap", testCheckVpcOverlap)
+	Context("Test Determine Permission Error", testDeterminePermissionError)
 })
 
-func testValidatePeeringPrerequisites() {
+func testDeterminePermissionError() {
+	var _ = Describe("Validate error input", func() {
+		When("Args are wrong", func() {
+			It("err is nil", func() {
+				result := determinePermissionError(nil, "")
+				Expect(result).To(BeNil())
+			})
+		})
+		When("It's an AWS error", func() {
+			It("is DryRunOperation error", func() {
+				err := smithy.GenericAPIError{
+					Code:    "DryRunOperation",
+					Message: "DryRunOperation",
+					Fault:   1,
+				}
+				operation := "check"
+				result := determinePermissionError(&err, operation)
+				Expect(result).Should(BeNil())
+			})
+			It("is UnauthorizedOperation error", func() {
+				err := smithy.GenericAPIError{
+					Code:    "UnauthorizedOperation",
+					Message: "UnauthorizedOperation",
+					Fault:   1,
+				}
+				operation := "check"
+				result := determinePermissionError(&err, operation)
+				Expect(result).Should(
+					MatchError(
+						MatchRegexp("no permission to " + operation),
+					),
+				)
+			})
+		})
+		When("It's not an AWS error", func() {
+			It("is a Generic Error", func() {
+				err := smithy.GenericAPIError{
+					Code:    "Generic Error",
+					Message: "Generic Error",
+					Fault:   1,
+				}
+				operation := ""
+				result := determinePermissionError(&err, operation)
+				Expect(result).Should(
+					MatchError(
+						MatchRegexp("error while checking permissions for " + operation),
+					),
+				)
+			})
+		})
+	})
+}
 
+func testValidatePeeringPrerequisites() {
 	cloudA := newCloudTestDriver(infraID, region)
 	cloudB := newCloudTestDriver(targetInfraID, targetRegion)
 	var _ = Describe("Validate Validate Peering Prerequisites", func() {
