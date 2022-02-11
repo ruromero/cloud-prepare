@@ -134,7 +134,7 @@ func (ac *awsCloud) validateRemoveTag(subnetID *string) error {
 	return determinePermissionError(err, "delete tags from subnets")
 }
 
-// validatePeeringPrerequisites checks info to determine if a VPC-Peering should work
+// validatePeeringPrerequisites checks info to determine if a VPC-Peering should work.
 func (ac *awsCloud) validatePeeringPrerequisites(target *awsCloud, reporter api.Reporter) error {
 	reporter.Started("Validating VPC Peering pre-requisites")
 
@@ -157,23 +157,25 @@ func (ac *awsCloud) validatePeeringPrerequisites(target *awsCloud, reporter api.
 	} else if overlap {
 		err = errors.Errorf("source [%v] and target [%v] CIDR Blocks must not overlap", *srcVpc.CidrBlock, *targetVpc.CidrBlock)
 		reporter.Failed(err)
+
 		return err
 	}
 
 	reporter.Succeeded("Validated VPC Peering pre-requisites")
+
 	return nil
 }
 
-// CheckVpcOverlap checks CIDR Blocks of networks A and B overlaps
-func CheckVpcOverlap(a *types.Vpc, b *types.Vpc) (bool, error) {
+// CheckVpcOverlap checks CIDR Blocks of networks A and B overlaps.
+func CheckVpcOverlap(a, b *types.Vpc) (bool, error) {
 	_, netA, err := net.ParseCIDR(*a.CidrBlock)
 	if err != nil {
-		return false, err
+		return false, errors.Wrapf(err, "unable to check VPC overlap for %s", *a.CidrBlock)
 	}
 
 	_, netB, err := net.ParseCIDR(*b.CidrBlock)
 	if err != nil {
-		return false, err
+		return false, errors.Wrapf(err, "unable to check VPC overlap for %s", *b.CidrBlock)
 	}
 
 	return netA.Contains(netB.IP) || netB.Contains(netA.IP), nil

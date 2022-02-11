@@ -36,21 +36,21 @@ var _ = Describe("AWS Peering", func() {
 	Context("Test Create Routes for Peering", testCreateRoutesForPeering)
 })
 
-// test of awsCloud.requestPeering func
 func testRequestPeering() {
 	cloudA := newCloudTestDriver(infraID, region)
 	cloudB := newCloudTestDriver(targetInfraID, targetRegion)
 	vpcA := "vpc-a"
 	vpcB := "vpc-b"
-	var awsCloudA *awsCloud
-	var awsCloudB *awsCloud
-
-	var _ = Describe("Validate Peering request", func() {
+	var awsCloudA, awsCloudB *awsCloud
+	var ok bool
+	_ = Describe("Validate Peering request", func() {
 		BeforeEach(func() {
-			awsCloudA = cloudA.cloud.(*awsCloud)
-			awsCloudB = cloudB.cloud.(*awsCloud)
+			awsCloudA, ok = cloudA.cloud.(*awsCloud)
+			Expect(ok).To(BeTrue())
+			awsCloudB, ok = cloudB.cloud.(*awsCloud)
+			Expect(ok).To(BeTrue())
 		})
-		When("Create a Peering Request", func() {
+		When("Create , a Peering Request", func() {
 			It("can request it", func() {
 				// TODO: Should we add more fields to mocked response?
 				cloudA.awsClient.EXPECT().CreateVpcPeeringConnection(context.TODO(), gomock.Any()).
@@ -85,15 +85,15 @@ func testRequestPeering() {
 	})
 }
 
-// test of awsCloud.acceptPeering func
 func testAcceptPeering() {
 	cloudA := newCloudTestDriver(infraID, region)
 	peeringID := "peer-id"
 	var awsCloudA *awsCloud
-
-	var _ = Describe("Validate Accept peering process", func() {
+	var ok bool
+	_ = Describe("Validate Accept peering process", func() {
 		BeforeEach(func() {
-			awsCloudA = cloudA.cloud.(*awsCloud)
+			awsCloudA, ok = cloudA.cloud.(*awsCloud)
+			Expect(ok).To(BeTrue())
 		})
 		When("Trying to accept a Peering Request", func() {
 			It("is accepted", func() {
@@ -114,7 +114,6 @@ func testAcceptPeering() {
 	})
 }
 
-// test of awsCloud.createRoutesForPeering func
 func testCreateRoutesForPeering() {
 	cloudA := newCloudTestDriver(infraID, region)
 	cloudB := newCloudTestDriver(targetInfraID, targetRegion)
@@ -130,13 +129,14 @@ func testCreateRoutesForPeering() {
 		},
 		VpcPeeringConnectionId: &peeringID,
 	}
-	var awsCloudA *awsCloud
-	var awsCloudB *awsCloud
-
-	var _ = Describe("Validate error input", func() {
+	var awsCloudA, awsCloudB *awsCloud
+	var ok bool
+	_ = Describe("Validate error input", func() {
 		BeforeEach(func() {
-			awsCloudA = cloudA.cloud.(*awsCloud)
-			awsCloudB = cloudB.cloud.(*awsCloud)
+			awsCloudA, ok = cloudA.cloud.(*awsCloud)
+			Expect(ok).To(BeTrue())
+			awsCloudB, ok = cloudB.cloud.(*awsCloud)
+			Expect(ok).To(BeTrue())
 		})
 		When("Create Routes For peering", func() {
 			It("can create them", func() {
@@ -209,17 +209,18 @@ func testGetRouteTableID() {
 	cloudA := newCloudTestDriver(infraID, region)
 	vpcA := "vpc-a"
 	var awsCloudA *awsCloud
-
-	var _ = Describe("Test Get Route Table ID", func() {
+	var ok bool
+	_ = Describe("Test Get Route Table ID", func() {
 		BeforeEach(func() {
-			awsCloudA = cloudA.cloud.(*awsCloud)
+			awsCloudA, ok = cloudA.cloud.(*awsCloud)
+			Expect(ok).To(BeTrue())
 		})
 		When("Trying to get Route Table ID", func() {
 			It("returns correct Route Table ID", func() {
 				cloudA.awsClient.EXPECT().DescribeRouteTables(context.TODO(), gomock.Any()).
 					Return(getRouteTableFor(vpcA))
 
-				rtID, err := awsCloudA.getRouteTableId(vpcA, api.NewLoggingReporter())
+				rtID, err := awsCloudA.getRouteTableID(vpcA, api.NewLoggingReporter())
 
 				Expect(err).To(BeNil())
 				Expect(rtID).ToNot(BeNil())
@@ -232,7 +233,7 @@ func testGetRouteTableID() {
 			cloudA.awsClient.EXPECT().DescribeRouteTables(context.TODO(), gomock.Any()).
 				Return(nil, errors.New(errMsg))
 
-			rtID, err := awsCloudA.getRouteTableId("", api.NewLoggingReporter())
+			rtID, err := awsCloudA.getRouteTableID("", api.NewLoggingReporter())
 
 			Expect(err).ToNot(BeNil())
 			Expect(err).Should(MatchError(MatchRegexp(errMsg)))

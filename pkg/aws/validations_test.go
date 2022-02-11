@@ -99,9 +99,10 @@ func testValidatePeeringPrerequisites() {
 						&ec2.DescribeVpcsOutput{
 							Vpcs: []types.Vpc{},
 						}, nil)
-
-				awsCloudA := cloudA.cloud.(*awsCloud)
-				awsCloudB := cloudB.cloud.(*awsCloud)
+				awsCloudA, ok := cloudA.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
+				awsCloudB, ok := cloudB.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
 				err := awsCloudA.validatePeeringPrerequisites(awsCloudB, api.NewLoggingReporter())
 
 				Expect(err).Should(HaveOccurred())
@@ -118,9 +119,10 @@ func testValidatePeeringPrerequisites() {
 						&ec2.DescribeVpcsOutput{
 							Vpcs: []types.Vpc{},
 						}, nil)
-
-				awsCloudA := cloudA.cloud.(*awsCloud)
-				awsCloudB := cloudB.cloud.(*awsCloud)
+				awsCloudA, ok := cloudA.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
+				awsCloudB, ok := cloudB.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
 				err := awsCloudA.validatePeeringPrerequisites(awsCloudB, api.NewLoggingReporter())
 
 				Expect(err).Should(HaveOccurred())
@@ -136,9 +138,10 @@ func testValidatePeeringPrerequisites() {
 					Return(getVpcOutputFor("vpc-a", "make it fail"))
 				cloudB.awsClient.EXPECT().DescribeVpcs(context.TODO(), gomock.Any()).
 					Return(getVpcOutputFor("vpc-b", "1.2.3.4/16"))
-
-				awsCloudA := cloudA.cloud.(*awsCloud)
-				awsCloudB := cloudB.cloud.(*awsCloud)
+				awsCloudA, ok := cloudA.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
+				awsCloudB, ok := cloudB.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
 				err := awsCloudA.validatePeeringPrerequisites(awsCloudB, api.NewLoggingReporter())
 
 				Expect(err).Should(HaveOccurred())
@@ -149,9 +152,10 @@ func testValidatePeeringPrerequisites() {
 					Return(getVpcOutputFor("vpc-a", "1.2.3.4/16"))
 				cloudB.awsClient.EXPECT().DescribeVpcs(context.TODO(), gomock.Any()).
 					Return(getVpcOutputFor("vpc-b", "1.2.3.4/16"))
-
-				awsCloudA := cloudA.cloud.(*awsCloud)
-				awsCloudB := cloudB.cloud.(*awsCloud)
+				awsCloudA, ok := cloudA.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
+				awsCloudB, ok := cloudB.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
 				err := awsCloudA.validatePeeringPrerequisites(awsCloudB, api.NewLoggingReporter())
 
 				Expect(err).Should(HaveOccurred())
@@ -164,9 +168,10 @@ func testValidatePeeringPrerequisites() {
 					Return(getVpcOutputFor("vpc-a", "10.0.0.0/16"))
 				cloudB.awsClient.EXPECT().DescribeVpcs(context.TODO(), gomock.Any()).
 					Return(getVpcOutputFor("vpc-b", "10.1.0.0/16"))
-
-				awsCloudA := cloudA.cloud.(*awsCloud)
-				awsCloudB := cloudB.cloud.(*awsCloud)
+				awsCloudA, ok := cloudA.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
+				awsCloudB, ok := cloudB.cloud.(*awsCloud)
+				Expect(ok).To(BeTrue())
 				err := awsCloudA.validatePeeringPrerequisites(awsCloudB, api.NewLoggingReporter())
 
 				Expect(err).ShouldNot(HaveOccurred())

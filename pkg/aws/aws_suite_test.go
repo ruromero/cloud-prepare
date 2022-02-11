@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	infraID      = "test-infraID"
-	region       = "test-region"
+	infraID = "test-infraID"
+	region  = "test-region"
 
 	targetInfraID = "other-infraID"
 	targetRegion  = "other-region"

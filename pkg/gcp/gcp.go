@@ -20,14 +20,15 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	gcpclient "github.com/submariner-io/cloud-prepare/pkg/gcp/client"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
-	"os"
-	"strings"
 )
 
 type gcpCloud struct {
@@ -39,7 +40,7 @@ func NewCloud(info CloudInfo) api.Cloud {
 	return &gcpCloud{CloudInfo: info}
 }
 
-// newCloudInfoFromConfig creates a new CloudInfo instance based on an AWS configuration
+// newCloudInfoFromConfig creates a new CloudInfo instance based on an AWS configuration.
 func newCloudInfoFromConfig(gcpClient gcpclient.Interface, projectID, infraID, region string) *CloudInfo {
 	return &CloudInfo{
 		ProjectID: projectID,
@@ -49,13 +50,18 @@ func newCloudInfoFromConfig(gcpClient gcpclient.Interface, projectID, infraID, r
 	}
 }
 
-// NewCloudInfoFromSettings creates a new CloudInfo instance using the given credentials file and profile
+// NewCloudInfoFromSettings creates a new CloudInfo instance using the given credentials file and profile.
 func NewCloudInfoFromSettings(credentialsFile, projectID, infraID, region string) (*CloudInfo, error) {
 	creds, err := getGCPCredentials(credentialsFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve GCP credentials")
+	}
+
 	options := []option.ClientOption{
 		option.WithCredentials(creds),
 		option.WithUserAgent("open-cluster-management.io submarineraddon/v1"),
 	}
+
 	gcpClient, err := gcpclient.NewClient(projectID, options)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to initialize GCP Client")
@@ -96,7 +102,7 @@ func (gc *gcpCloud) PrepareForSubmariner(input api.PrepareForSubmarinerInput, re
 }
 
 // CreateVpcPeering Creates a VPC Peering to the target cloud. Only the same
-// Cloud Provider is supported
+// Cloud Provider is supported.
 func (gc *gcpCloud) CreateVpcPeering(target api.Cloud, reporter api.Reporter) error {
 	switch target.(type) {
 	case *gcpCloud:

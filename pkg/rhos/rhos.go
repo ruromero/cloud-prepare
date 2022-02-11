@@ -87,3 +87,13 @@ func (rc *rhosCloud) CleanupAfterSubmariner(reporter api.Reporter) error {
 
 	return nil
 }
+
+func (rc *rhosCloud) CreateVpcPeering(target api.Cloud, reporter api.Reporter) error {
+	switch target.(type) {
+	case *rhosCloud:
+		// TODO: implement me
+		return nil
+	default:
+		return errors.Errorf("only RHOS clients are supported")
+	}
+}

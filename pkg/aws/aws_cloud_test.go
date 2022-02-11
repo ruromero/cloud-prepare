@@ -36,7 +36,7 @@ var _ = Describe("AWS Peering", func() {
 func testCreateVpcPeering() {
 	cloudA := newCloudTestDriver(infraID, region)
 	cloudB := newCloudTestDriver(targetInfraID, targetRegion)
-	var _ = Describe("VPC Peering", func() {
+	_ = Describe("VPC Peering", func() {
 		When("receiving a target Cloud", func() {
 			It("is an unsupported Cloud", func() {
 				invalidCloud := &fooCloud{}
@@ -86,8 +86,7 @@ func testCreateVpcPeering() {
 	})
 }
 
-type fooCloud struct {
-}
+type fooCloud struct{}
 
 func (f *fooCloud) PrepareForSubmariner(input api.PrepareForSubmarinerInput, reporter api.Reporter) error {
 	panic("not implemented")
@@ -101,8 +100,9 @@ func (f *fooCloud) CleanupAfterSubmariner(reporter api.Reporter) error {
 	panic("not implemented")
 }
 
-func getRouteTableFor(vpcID string) (*ec2.DescribeRouteTablesOutput, error) {
+func getRouteTableFor(vpcID string) *ec2.DescribeRouteTablesOutput {
 	rtID := vpcID + "-rt"
+
 	return &ec2.DescribeRouteTablesOutput{
 		RouteTables: []types.RouteTable{
 			{
@@ -110,10 +110,10 @@ func getRouteTableFor(vpcID string) (*ec2.DescribeRouteTablesOutput, error) {
 				RouteTableId: &rtID,
 			},
 		},
-	}, nil
+	}
 }
 
-func getVpcOutputFor(id, cidrBlock string) (*ec2.DescribeVpcsOutput, error) {
+func getVpcOutputFor(id, cidrBlock string) *ec2.DescribeVpcsOutput {
 	return &ec2.DescribeVpcsOutput{
 		Vpcs: []types.Vpc{
 			{
@@ -121,7 +121,7 @@ func getVpcOutputFor(id, cidrBlock string) (*ec2.DescribeVpcsOutput, error) {
 				CidrBlock: &cidrBlock,
 			},
 		},
-	}, nil
+	}
 }
 
 type cloudTestDriver struct {

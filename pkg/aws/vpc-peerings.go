@@ -29,45 +29,55 @@ import (
 
 func (ac *awsCloud) createAWSPeering(target *awsCloud, reporter api.Reporter) error {
 	reporter.Started("Creating VPC Peering between %v/%v and %v/%v", ac.infraID, ac.region, target.infraID, target.region)
+
 	err := ac.validatePeeringPrerequisites(target, reporter)
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to validate vpc peering prerequisites")
 	}
-	sourceVpcId, err := ac.getVpcID()
+
+	sourceVpcID, err := ac.getVpcID()
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to retrieve source VPC ID")
 	}
-	targetVpcId, err := target.getVpcID()
+
+	targetVpcID, err := target.getVpcID()
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to retrieve target VPC ID")
 	}
-	peering, err := ac.requestPeering(sourceVpcId, targetVpcId, target, reporter)
+
+	peering, err := ac.requestPeering(sourceVpcID, targetVpcID, target, reporter)
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to request VPC peering")
 	}
+
 	err = target.acceptPeering(peering.VpcPeeringConnectionId, reporter)
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to accept VPC peering")
 	}
-	err = ac.createRoutesForPeering(target, sourceVpcId, targetVpcId, peering, reporter)
+
+	err = ac.createRoutesForPeering(target, sourceVpcID, targetVpcID, peering, reporter)
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to create routes for VPC peering")
 	}
+
 	reporter.Succeeded("Created VPC Peering")
+
 	return nil
 }
 
-func (ac *awsCloud) requestPeering(srcVpcId, targetVpcId string, target *awsCloud, reporter api.Reporter) (*types.VpcPeeringConnection, error) {
+func (ac *awsCloud) requestPeering(srcVpcID, targetVpcID string, target *awsCloud,
+	reporter api.Reporter) (*types.VpcPeeringConnection, error) {
 	reporter.Started("Requesting VPC Peering")
+
 	input := &ec2.CreateVpcPeeringConnectionInput{
-		VpcId:      &srcVpcId,
-		PeerVpcId:  &targetVpcId,
+		VpcId:      &srcVpcID,
+		PeerVpcId:  &targetVpcID,
 		PeerRegion: &target.region,
 		TagSpecifications: []types.TagSpecification{
 			{
@@ -78,77 +88,94 @@ func (ac *awsCloud) requestPeering(srcVpcId, targetVpcId string, target *awsClou
 			},
 		},
 	}
+
 	output, err := ac.client.CreateVpcPeeringConnection(context.TODO(), input)
 	if err != nil {
 		reporter.Failed(err)
 		return nil, errors.Wrapf(err, "unable to request VPC peering")
 	}
+
 	peering := output.VpcPeeringConnection
+
 	reporter.Succeeded("Requested VPC Peering with ID %v", peering.VpcPeeringConnectionId)
+
 	return peering, nil
 }
 
-func (ac *awsCloud) acceptPeering(peeringId *string, reporter api.Reporter) error {
+func (ac *awsCloud) acceptPeering(peeringID *string, reporter api.Reporter) error {
 	reporter.Started("Accepting VPC Peering")
+
 	input := &ec2.AcceptVpcPeeringConnectionInput{
-		VpcPeeringConnectionId: peeringId,
+		VpcPeeringConnectionId: peeringID,
 	}
+
 	_, err := ac.client.AcceptVpcPeeringConnection(context.TODO(), input)
 	if err != nil {
 		reporter.Failed(err)
-		return errors.Wrapf(err, "unable to accept VPC peering connection %v", peeringId)
+		return errors.Wrapf(err, "unable to accept VPC peering connection %v", peeringID)
 	}
-	reporter.Succeeded("Accepted VPC Peering with id: %v", peeringId)
+
+	reporter.Succeeded("Accepted VPC Peering with id: %v", peeringID)
+
 	return nil
 }
 
-func (ac *awsCloud) createRoutesForPeering(target *awsCloud, srcVpcId, targetVpcId string, peering *types.VpcPeeringConnection, reporter api.Reporter) error {
+func (ac *awsCloud) createRoutesForPeering(target *awsCloud, srcVpcID, targetVpcID string,
+	peering *types.VpcPeeringConnection, reporter api.Reporter) error {
 	reporter.Started("Create VPC Peering")
 
-	routeTableID, err := ac.getRouteTableId(srcVpcId, reporter)
+	routeTableID, err := ac.getRouteTableID(srcVpcID, reporter)
 	if err != nil {
 		reporter.Failed(err)
-		return errors.Wrapf(err, "unable to create route for %v", srcVpcId)
+		return errors.Wrapf(err, "unable to create route for %v", srcVpcID)
 	}
+
 	input := &ec2.CreateRouteInput{
 		RouteTableId:           routeTableID,
 		DestinationCidrBlock:   peering.AccepterVpcInfo.CidrBlock,
 		VpcPeeringConnectionId: peering.VpcPeeringConnectionId,
 	}
+
 	_, err = ac.client.CreateRoute(context.TODO(), input)
 	if err != nil {
 		reporter.Failed(err)
-		return errors.Wrapf(err, "unable to create route for %v", srcVpcId)
+		return errors.Wrapf(err, "unable to create route for %v", srcVpcID)
 	}
-	routeTableID, err = target.getRouteTableId(targetVpcId, reporter)
+
+	routeTableID, err = target.getRouteTableID(targetVpcID, reporter)
 	if err != nil {
 		reporter.Failed(err)
-		return errors.Wrapf(err, "unable to create route for %v", targetVpcId)
+		return errors.Wrapf(err, "unable to create route for %v", targetVpcID)
 	}
+
 	input = &ec2.CreateRouteInput{
 		RouteTableId:           routeTableID,
 		DestinationCidrBlock:   peering.RequesterVpcInfo.CidrBlock,
 		VpcPeeringConnectionId: peering.VpcPeeringConnectionId,
 	}
+
 	_, err = target.client.CreateRoute(context.TODO(), input)
 	if err != nil {
 		reporter.Failed(err)
-		return errors.Wrapf(err, "unable to create route for %v", targetVpcId)
+		return errors.Wrapf(err, "unable to create route for %v", targetVpcID)
 	}
+
 	reporter.Succeeded("Created Routes for VPC Peering connection %v", peering.VpcPeeringConnectionId)
+
 	return nil
 }
 
-func (ac *awsCloud) getRouteTableId(vpcId string, reporter api.Reporter) (*string, error) {
+func (ac *awsCloud) getRouteTableID(vpcID string, reporter api.Reporter) (*string, error) {
 	reporter.Started("Getting RouteTableID")
-	vpcIdKeyName := "vpc-id"
+
+	vpcIDKeyName := "vpc-id"
 	associationKey := "association.main"
 	input := &ec2.DescribeRouteTablesInput{
 		Filters: []types.Filter{
 			{
-				Name: &vpcIdKeyName,
+				Name: &vpcIDKeyName,
 				Values: []string{
-					vpcId,
+					vpcID,
 				},
 			},
 			{
@@ -159,12 +186,16 @@ func (ac *awsCloud) getRouteTableId(vpcId string, reporter api.Reporter) (*strin
 			},
 		},
 	}
+
 	output, err := ac.client.DescribeRouteTables(context.TODO(), input)
 	if err != nil {
 		reporter.Failed(err)
-		return nil, err
+		return nil, errors.Wrapf(err, "unable to get route tables for %s", vpcID)
 	}
-	routeTableId := output.RouteTables[0].RouteTableId
-	reporter.Succeeded("Retrieved RouteTableID %v", routeTableId)
-	return routeTableId, nil
+
+	routeTableID := output.RouteTables[0].RouteTableId
+
+	reporter.Succeeded("Retrieved RouteTableID %v", routeTableID)
+
+	return routeTableID, nil
 }

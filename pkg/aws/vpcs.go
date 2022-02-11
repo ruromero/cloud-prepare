@@ -30,6 +30,7 @@ func (ac *awsCloud) getVpcID() (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to retrieve AWS VPC ID")
 	}
+
 	return *vpc.VpcId, nil
 }
 

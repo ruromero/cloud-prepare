@@ -33,9 +33,8 @@ import (
 
 // Interface wraps an actual AWS SDK ec2 client to allow for easier testing.
 type Interface interface {
-
 	AcceptVpcPeeringConnection(ctx context.Context, input *ec2.AcceptVpcPeeringConnectionInput,
-		optFns ...func( *ec2.Options)) (*ec2.AcceptVpcPeeringConnectionOutput, error)
+		optFns ...func(*ec2.Options)) (*ec2.AcceptVpcPeeringConnectionOutput, error)
 
 	AuthorizeSecurityGroupIngress(ctx context.Context, params *ec2.AuthorizeSecurityGroupIngressInput,
 		optFns ...func(*ec2.Options)) (*ec2.AuthorizeSecurityGroupIngressOutput, error)
@@ -45,9 +44,9 @@ type Interface interface {
 	CreateTags(ctx context.Context, params *ec2.CreateTagsInput,
 		optFns ...func(*ec2.Options)) (*ec2.CreateTagsOutput, error)
 	CreateRoute(ctx context.Context, input *ec2.CreateRouteInput,
-		optFns ...func( *ec2.Options)) (*ec2.CreateRouteOutput, error)
+		optFns ...func(*ec2.Options)) (*ec2.CreateRouteOutput, error)
 	CreateVpcPeeringConnection(ctx context.Context, input *ec2.CreateVpcPeeringConnectionInput,
-		optFns ...func( *ec2.Options)) (*ec2.CreateVpcPeeringConnectionOutput, error)
+		optFns ...func(*ec2.Options)) (*ec2.CreateVpcPeeringConnectionOutput, error)
 
 	DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput,
 		optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error)
@@ -75,7 +74,7 @@ type awsClient struct {
 }
 
 func (ac *awsClient) AcceptVpcPeeringConnection(ctx context.Context, input *ec2.AcceptVpcPeeringConnectionInput,
-	optFns ...func( *ec2.Options)) (*ec2.AcceptVpcPeeringConnectionOutput, error) {
+	optFns ...func(*ec2.Options)) (*ec2.AcceptVpcPeeringConnectionOutput, error) {
 	return ac.ec2Client.AcceptVpcPeeringConnection(ctx, input, optFns...)
 }
 
@@ -95,12 +94,12 @@ func (ac *awsClient) CreateTags(ctx context.Context, input *ec2.CreateTagsInput,
 }
 
 func (ac *awsClient) CreateRoute(ctx context.Context, input *ec2.CreateRouteInput,
-	optFns ...func( *ec2.Options)) (*ec2.CreateRouteOutput, error) {
+	optFns ...func(*ec2.Options)) (*ec2.CreateRouteOutput, error) {
 	return ac.ec2Client.CreateRoute(ctx, input, optFns...)
 }
 
 func (ac *awsClient) CreateVpcPeeringConnection(ctx context.Context, input *ec2.CreateVpcPeeringConnectionInput,
-	optFns ...func( *ec2.Options)) (*ec2.CreateVpcPeeringConnectionOutput, error) {
+	optFns ...func(*ec2.Options)) (*ec2.CreateVpcPeeringConnectionOutput, error) {
 	return ac.ec2Client.CreateVpcPeeringConnection(ctx, input, optFns...)
 }
 
