@@ -20,6 +20,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -27,42 +28,77 @@ import (
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 )
 
+const (
+	attempts = 3
+	waitTime = time.Duration(10)
+)
+
 func (ac *awsCloud) createAWSPeering(target *awsCloud, reporter api.Reporter) error {
 	reporter.Started("Creating VPC Peering between %v/%v and %v/%v", ac.infraID, ac.region, target.infraID, target.region)
 
+	// Validating Peering Prerequisites
 	err := ac.validatePeeringPrerequisites(target, reporter)
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to validate vpc peering prerequisites")
 	}
 
+	// Get Source VPC ID
 	sourceVpcID, err := ac.getVpcID()
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to retrieve source VPC ID")
 	}
 
+	// Get Target VPC ID
 	targetVpcID, err := target.getVpcID()
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to retrieve target VPC ID")
 	}
 
+	// Create VPCPeering object
 	peering, err := ac.requestPeering(sourceVpcID, targetVpcID, target, reporter)
 	if err != nil {
 		reporter.Failed(err)
 		return errors.Wrapf(err, "unable to request VPC peering")
 	}
 
-	err = target.acceptPeering(peering.VpcPeeringConnectionId, reporter)
-	if err != nil {
-		reporter.Failed(err)
+	// Accept Peering Request
+	i := 0
+	for i = 0; i < attempts; i++ {
+		if i > 0 {
+			reporter.Started("Trying again to Accept peering")
+			time.Sleep(waitTime)
+		}
+		err = target.acceptPeering(peering.VpcPeeringConnectionId, reporter)
+		if err != nil {
+			reporter.Failed(err)
+			continue
+		} else {
+			break
+		}
+	}
+	if i == attempts {
 		return errors.Wrapf(err, "unable to accept VPC peering")
 	}
 
-	err = ac.createRoutesForPeering(target, sourceVpcID, targetVpcID, peering, reporter)
-	if err != nil {
-		reporter.Failed(err)
+	// Peering routes creation. It should create two routes (one per cluster) to forward
+	// the traffic between clusters throught the peering object based on CIDR blocks
+	for i = 0; i < attempts; i++ {
+		if i > 0 {
+			reporter.Started("Trying again to Create routes for VPC Peering")
+			time.Sleep(waitTime)
+		}
+		err = ac.createRoutesForPeering(target, sourceVpcID, targetVpcID, peering, reporter)
+		if err != nil {
+			reporter.Failed(err)
+			continue
+		} else {
+			break
+		}
+	}
+	if i == attempts {
 		return errors.Wrapf(err, "unable to create routes for VPC peering")
 	}
 
